@@ -1,0 +1,48 @@
+@model DealerDatabase.Web.Models.DealerListViewModel
+@{
+    ViewData["Title"] = "Dealers";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+    <div>
+        <h1 class="h3 mb-1">Dealer database</h1>
+        <p class="text-muted mb-0">Consolidated dealer records with source lineage.</p>
+    </div>
+    <form method="get" class="d-flex gap-2">
+        <input class="form-control" name="q" value="@Model.Query" placeholder="Search name, company no, FCA FRN or VAT" />
+        <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+</div>
+
+@if (Model.Dealers.Count == 0)
+{
+    <p class="text-muted">No dealers found. Run the import console application to populate the database.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Dealer</th>
+                    <th>Company</th>
+                    <th>FCA</th>
+                    <th>Postcode</th>
+                    <th>Sources</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var dealer in Model.Dealers)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@dealer.Id">@dealer.Name</a><div class="small text-muted">@dealer.LegalCompanyName</div></td>
+                    <td>@dealer.CompanyNumber</td>
+                    <td>@dealer.FcaReferenceNumber <span class="small text-muted">@dealer.FcaStatus</span></td>
+                    <td>@(dealer.TradingPostcode ?? dealer.RegisteredPostcode)</td>
+                    <td>@dealer.SourceCount</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

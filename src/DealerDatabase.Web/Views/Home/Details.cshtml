@@ -1,0 +1,132 @@
+@model DealerDatabase.Web.Models.DealerDetailsViewModel
+@{
+    ViewData["Title"] = Model.Dealer.Name;
+    var d = Model.Dealer;
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="h3 mb-1">@d.Name</h1>
+        <div class="text-muted">@d.LegalCompanyName</div>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Identity &amp; company</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Company number</dt><dd class="col-sm-7">@d.CompanyNumber</dd>
+                    <dt class="col-sm-5">Incorporated</dt><dd class="col-sm-7">@d.IncorporationDate?.ToString("dd MMM yyyy")</dd>
+                    <dt class="col-sm-5">Status</dt><dd class="col-sm-7">@d.CompanyStatus</dd>
+                    <dt class="col-sm-5">VAT</dt><dd class="col-sm-7">@d.VatNumber (@d.VatValidationStatus)</dd>
+                    <dt class="col-sm-5">FCA</dt><dd class="col-sm-7">@d.FcaReferenceNumber - @d.FcaStatus</dd>
+                    <dt class="col-sm-5">ICO</dt><dd class="col-sm-7">@d.IcoRegistrationNumber - @d.IcoExpiryDate?.ToString("dd MMM yyyy")</dd>
+                    <dt class="col-sm-5">SAF</dt><dd class="col-sm-7">@d.SafStatus - @d.SafExpiryDate?.ToString("dd MMM yyyy")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Contact</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Phone</dt><dd class="col-sm-7">@d.PrimaryPhone</dd>
+                    <dt class="col-sm-5">Email</dt><dd class="col-sm-7">@d.PrimaryEmail</dd>
+                    <dt class="col-sm-5">Website</dt><dd class="col-sm-7 text-break">@d.PrimaryWebsite</dd>
+                    <dt class="col-sm-5">Trading postcode</dt><dd class="col-sm-7">@d.TradingPostcode</dd>
+                    <dt class="col-sm-5">Registered postcode</dt><dd class="col-sm-7">@d.RegisteredPostcode</dd>
+                    <dt class="col-sm-5">Trading address</dt><dd class="col-sm-7">@string.Join(", ", new[] { d.TradingAddressLine1, d.TradingAddressLine2, d.TradingAddressLine3, d.TradingCity, d.TradingCounty }.Where(x => !string.IsNullOrWhiteSpace(x)))</dd>
+                    <dt class="col-sm-5">Registered address</dt><dd class="col-sm-7">@string.Join(", ", new[] { d.RegisteredAddressLine1, d.RegisteredAddressLine2, d.RegisteredAddressLine3, d.RegisteredCity, d.RegisteredCounty, d.RegisteredPostcode }.Where(x => !string.IsNullOrWhiteSpace(x)))</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Trading names</div>
+            <div class="card-body">
+                <ul class="mb-0">
+                @foreach (var name in d.TradingNames.OrderBy(x => x.Name))
+                {
+                    <li>@name.Name <span class="small text-muted">(@name.SourceRecordId)</span></li>
+                }
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Finance &amp; stock</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-6">Calculator</dt><dd class="col-sm-6">@d.FinanceCalculator</dd>
+                    <dt class="col-sm-6">APR</dt><dd class="col-sm-6">@d.RepresentativeApr</dd>
+                    <dt class="col-sm-6">Inventory</dt><dd class="col-sm-6">@d.InventoryCount</dd>
+                    <dt class="col-sm-6">Avg listed</dt><dd class="col-sm-6">@d.AvgListedPrice?.ToString("C")</dd>
+                    <dt class="col-sm-6">Avg sold</dt><dd class="col-sm-6">@d.AvgSoldPrice?.ToString("C")</dd>
+                    <dt class="col-sm-6">Sold / 30d</dt><dd class="col-sm-6">@d.SoldLast30Days</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Directors</div>
+            <div class="card-body">
+                @if (d.Directors.Count == 0)
+                {
+                    <span class="text-muted">No director data.</span>
+                }
+                else
+                {
+                    <ul class="mb-0">
+                    @foreach (var director in d.Directors.OrderBy(x => x.Name))
+                    {
+                        <li>@director.Name <span class="small text-muted">@director.Role</span></li>
+                    }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header">Lineage &amp; field provenance</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Field</th><th>Observed values and source</th></tr></thead>
+                <tbody>
+                @foreach (var pair in Model.Provenance.OrderBy(x => x.Key))
+                {
+                    <tr>
+                        <th>@pair.Key</th>
+                        <td>@string.Join("; ", pair.Value)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3 mb-4">
+    <div class="card-header">Source records (@d.SourceRecords.Count)</div>
+    <div class="card-body">
+        <p class="small text-muted">Original source payloads are retained in the database as JSON and linked to the consolidated dealer.</p>
+        <ul class="mb-0">
+        @foreach (var source in Model.SourceLabels)
+        {
+            <li>@source</li>
+        }
+        </ul>
+    </div>
+</div>
