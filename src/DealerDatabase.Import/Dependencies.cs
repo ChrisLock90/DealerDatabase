@@ -1,15 +1,14 @@
-using Microsoft.Extensions.DependencyInjection;
+namespace DealerDatabase.Import;
+
+using DealerDatabase.Import.Abstractions;
 using DealerDatabase.Import.Importing;
 using DealerDatabase.Import.Matching;
-using DealerDatabase.Import.Abstractions;
-
-namespace DealerDatabase.Import;
+using Microsoft.Extensions.DependencyInjection;
 
 public static class Dependencies
 {
     public static IServiceCollection AddDealerImportServices(this IServiceCollection services)
-    {
-        // Import pipeline services
+    {        
         services.AddTransient<ISourceDataLoader, SourceDataLoader>();
         services.AddTransient<IDealerMatcher, DealerMatcher>();
         services.AddTransient<IConsolidationService, ConsolidationService>();

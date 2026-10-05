@@ -1,76 +1,84 @@
 # Dealer Database - Jigsaw Finance Technical Task
 
-A .NET 8 solution for consolidating fictional dealership data from seven heterogeneous source exports into a single SQLite database using Entity Framework Core Code First migrations.
-
-## Projects
-
-```
-DealerDatabase.sln
-DECISIONS.md
-README.md
-data/
-src/
-  DealerDatabase.Data/       EF Core model, DbContext and migrations
-  DealerDatabase.Import/     console importer, normalisation, matching and consolidation
-  DealerDatabase.Web/        optional read-only ASP.NET Core MVC UI
-```
-
-## Prerequisites
-
-- .NET 8 SDK
-
-NuGet packages are limited to the existing EF Core SQLite/Design and ASP.NET hosting dependencies supplied by the starter solution.
-
-## Run the importer
-
-From the solution directory:
+## Running the importer
 
 ```bash
-dotnet restore
 dotnet run --project src/DealerDatabase.Import
 ```
 
-The importer:
+Importer behavior:
 
-1. Reads every file in `data/`, including all VAT lookup JSON files.
-2. Normalises names, company numbers, VAT numbers, FCA FRNs, postcodes, phones, email addresses and website domains.
-3. Matches records using exact authoritative identifiers plus corroborated similarity signals.
-4. Consolidates one `Dealer` entity per matched cluster and keeps the original source rows.
-5. Applies EF Core migrations and writes to `dealers.db`.
-6. Rebuilds the snapshot-derived tables inside a transaction, so rerunning the importer does not create duplicate logical dealers.
+1. Reads every source in `data/` (including all `vat_lookups/*.json`).
+2. Normalizes names, company numbers, VAT numbers, FCA FRNs, postcodes, phones, emails and domains.
+3. Matches records across sources into dealer clusters.
+4. Consolidates one canonical `Dealer` per cluster and preserves provenance.
+5. Applies EF Core migrations.
+6. Rebuilds persisted data transactionally so reruns stay idempotent.
 
-Expected console output is similar to:
+Database output file:
 
-```text
-Loaded ... source records: CH=..., CRW=..., FCA=..., ICO=..., MC=..., SAF=..., VAT=...
-Consolidated ... distinct dealers ... using confidence floor 85%.
-Imported ... distinct dealers from ... source records.
-```
+- `dealers.db` at solution root.
 
-## Run the web interface
+## Running the web interface (optional)
 
 ```bash
 dotnet run --project src/DealerDatabase.Web
 ```
 
-The optional MVC UI provides a searchable dealer list and a detail page with company/regulatory data, contact details, trading names, directors, source lineage and field-level provenance.
+The web app provides:
 
-## Data model
+- searchable dealer list
+- dealer details page
+- grouped field provenance (value shown once, with all contributing sources)
 
-`Dealer` contains the canonical consolidated view required by the brief. `DealerSourceRecord` retains each original source payload and matching evidence. `DealerFieldSource` records which source records supplied each consolidated field. `DealerTradingName` and `DealerDirector` preserve multi-valued source information.
+## Running tests
+
+All tests:
+
+```bash
+dotnet test DealerDatabase.sln
+```
+
+Targeted examples:
+
+```bash
+dotnet test DealerDatabase.Import.Tests/DealerDatabase.Import.UnitTests.csproj
+dotnet test DealerDatabase.Import.IntegrationTests/DealerDatabase.Import.IntegrationTests.csproj
+dotnet test Dealer.Import.FeatureTests/Dealer.Import.FeatureTests.csproj
+dotnet test DealerDatabase.Data.Tests/DealerDatabase.Data.UnitTests.csproj
+dotnet test DealerDatabase.Data.IntegrationTests.cs/DealerDatabase.Data.IntegrationTests.csproj
+```
+
+## Data model & provenance
+
+Canonical dealer data is held in `Dealer`. Provenance is retained through:
+
+- `DealerSourceRecord` (raw source rows + matching evidence)
+- `DealerFieldSource` (field/value-level source lineage)
+- `DealerTradingName` and `DealerDirector` (multi-valued source data)
+
+## Logging
+
+Structured logging is implemented across:
+
+- source loading
+- matching lifecycle
+- consolidation lifecycle
+- import transaction flow
+- web search/details actions
+
+Environment-specific log levels:
+
+- `src/DealerDatabase.Import/appsettings*.json`
+- `src/DealerDatabase.Web/appsettings*.json`
 
 ## Migrations
 
+Existing migrations are in `src/DealerDatabase.Data/Migrations`.
 
-Both the starter migration and the consolidated-schema migration are included. If you have already run an earlier copy of the starter solution, delete `dealers.db` and rerun the importer for a clean snapshot.
-
-To create future migrations:
+To add a migration:
 
 ```bash
 dotnet tool restore
 dotnet ef migrations add <MigrationName> --project src/DealerDatabase.Data
 ```
-
-## Design notes
-
-See [DECISIONS.md](DECISIONS.md) before reading the matching/consolidation code. It describes the evidence hierarchy, conflict handling, assumptions and the main follow-on improvements I would make for production.

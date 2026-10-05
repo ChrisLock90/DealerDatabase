@@ -1,7 +1,7 @@
+namespace DealerDatabase.Data;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-
-namespace DealerDatabase.Data;
 
 public static class ServiceCollectionExtensions
 {

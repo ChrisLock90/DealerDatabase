@@ -109,7 +109,24 @@
                 {
                     <tr>
                         <th>@pair.Key</th>
-                        <td>@string.Join("; ", pair.Value)</td>
+                        <td>
+                            @if (pair.Value.Count == 0)
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                            else
+                            {
+                                <ul class="mb-0 ps-3">
+                                @foreach (var item in pair.Value)
+                                {
+                                    <li>
+                                        <span>@item.Value</span>
+                                        <span class="text-muted"> — @string.Join(", ", item.Sources)</span>
+                                    </li>
+                                }
+                                </ul>
+                            }
+                        </td>
                     </tr>
                 }
                 </tbody>

@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace DealerDatabase.Import.Importing;
 
 public sealed class SourceDealerRecord

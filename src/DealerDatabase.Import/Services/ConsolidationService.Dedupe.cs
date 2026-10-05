@@ -5,7 +5,7 @@ namespace DealerDatabase.Import.Importing;
 public static class ConsolidationServiceExtensions
 {
     // Public helper extension used by the unit test and the import pipeline.
-    public static IList<Dealer> DeduplicateDirectors(this DealerDatabase.Import.Abstractions.IConsolidationService _svc, IList<Dealer> dealers)
+    public static IList<Dealer> DeduplicateDirectors(this Abstractions.IConsolidationService _svc, IList<Dealer> dealers)
     {
         foreach (var dealer in dealers)
         {
@@ -35,8 +35,7 @@ public static class ConsolidationServiceExtensions
                     if (!first.AppointedOn.HasValue && alt.AppointedOn.HasValue)
                         first.AppointedOn = alt.AppointedOn;
                     if (!first.ResignedOn.HasValue && alt.ResignedOn.HasValue)
-                        first.ResignedOn = alt.ResignedOn;
-                    // add more merge rules as needed
+                        first.ResignedOn = alt.ResignedOn;                    
                 }
 
                 // Ensure normalized name/role are stored (trimmed from the first item)

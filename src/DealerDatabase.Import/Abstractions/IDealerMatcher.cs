@@ -1,7 +1,7 @@
+namespace DealerDatabase.Import.Abstractions;
+
 using DealerDatabase.Import.Importing;
 using DealerDatabase.Import.Matching;
-
-namespace DealerDatabase.Import.Abstractions;
 
 public interface IDealerMatcher
 {

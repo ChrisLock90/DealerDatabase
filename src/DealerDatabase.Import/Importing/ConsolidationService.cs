@@ -1,18 +1,30 @@
+namespace DealerDatabase.Import.Importing;
+
 using System.Text.Json;
 using DealerDatabase.Data.Entities;
 using DealerDatabase.Import.Matching;
-
 using DealerDatabase.Import.Abstractions;
+using Microsoft.Extensions.Logging;
 
-namespace DealerDatabase.Import.Importing;
-
-public sealed class ConsolidationService : IConsolidationService
+public sealed class ConsolidationService(ILogger<ConsolidationService> logger) : IConsolidationService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public List<Dealer> BuildDealers(MatchOutput output)
     {
-        return output.Clusters.Select(BuildDealer).ToList();
+        logger.LogInformation("Consolidation started for {ClusterCount} matched clusters", output.Clusters.Count);
+
+        var dealers = output.Clusters.Select(BuildDealer).ToList();
+
+        var withDirectors = dealers.Count(d => d.Directors.Count > 0);
+        var withSourceRecords = dealers.Count(d => d.SourceRecords.Count > 0);
+        logger.LogInformation(
+            "Consolidation complete. Dealers={DealerCount}, WithDirectors={WithDirectors}, WithSourceRecords={WithSourceRecords}",
+            dealers.Count,
+            withDirectors,
+            withSourceRecords);
+
+        return dealers;
     }
 
     private static Dealer BuildDealer(MatchCluster cluster)

@@ -1,7 +1,7 @@
+namespace DealerDatabase.Data;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-
-namespace DealerDatabase.Data;
 
 /// <summary>
 /// Used by the EF Core tools (e.g. <c>dotnet ef migrations add</c>) to create the context at design time.
