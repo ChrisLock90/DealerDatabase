@@ -74,6 +74,7 @@ See `DECISIONS.md` for matching, conflict handling, assumptions, and follow-on i
   to determine the most recent source record for each field for future imports when data is re-crawled or refreshed
 - Add a web API for programmatic access to the dealer database with Swagger/OpenAPI documentation
 - CSV library for more robust import/export
+- Add base test classes for common code
 - Upgrade to .NET 10 and EF Core 8
 - Add unit tests for the web interface
 - More robust tests and logging
