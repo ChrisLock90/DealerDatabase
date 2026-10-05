@@ -1,84 +1,64 @@
-# Dealer Database - Jigsaw Finance Technical Task
+Dealer Database - Jigsaw Finance Technical Task
 
-## Running the importer
+A .NET 8 solution for consolidating dealership data from multiple source exports into a single SQLite database using Entity Framework Core migrations.
+Projects
 
-```bash
+•	DealerDatabase.sln
+•	DECISIONS.md
+•	README.md
+•	data/
+•	src/
+•	DealerDatabase.Data/ — EF Core model, DbContext, and migrations
+•	DealerDatabase.Import/ — console importer, normalization, matching, and consolidation
+•	DealerDatabase.Web/ — optional read-only ASP.NET Core MVC UI
+
+Prerequisites
+
+•	Requires .NET 8 SDK. The solution uses EF Core SQLite/Design, Microsoft.Extensions.Hosting, and NUnit-based test dependencies.
+
+Run the importer
+From the solution directory:
+dotnet restore
 dotnet run --project src/DealerDatabase.Import
 ```
+The importer:
 
-Importer behavior:
+- reads source data from `data/`
+- normalizes identifiers and contact data
+- matches related records into dealer clusters
+- consolidates one canonical `Dealer` per cluster
+- applies EF Core migrations
+- writes the output database to `dealers.db`
 
-1. Reads every source in `data/` (including all `vat_lookups/*.json`).
-2. Normalizes names, company numbers, VAT numbers, FCA FRNs, postcodes, phones, emails and domains.
-3. Matches records across sources into dealer clusters.
-4. Consolidates one canonical `Dealer` per cluster and preserves provenance.
-5. Applies EF Core migrations.
-6. Rebuilds persisted data transactionally so reruns stay idempotent.
+## Run the web interface
 
-Database output file:
-
-- `dealers.db` at solution root.
-
-## Running the web interface (optional)
-
-```bash
 dotnet run --project src/DealerDatabase.Web
-```
 
 The web app provides:
+- a searchable dealer list
+- a dealer details page
+- grouped provenance showing contributing source values
 
-- searchable dealer list
-- dealer details page
-- grouped field provenance (value shown once, with all contributing sources)
-
-## Running tests
-
-All tests:
-
-```bash
+## Run tests
 dotnet test DealerDatabase.sln
-```
 
-Targeted examples:
+## Data model
 
-```bash
-dotnet test DealerDatabase.Import.Tests/DealerDatabase.Import.UnitTests.csproj
-dotnet test DealerDatabase.Import.IntegrationTests/DealerDatabase.Import.IntegrationTests.csproj
-dotnet test Dealer.Import.FeatureTests/Dealer.Import.FeatureTests.csproj
-dotnet test DealerDatabase.Data.Tests/DealerDatabase.Data.UnitTests.csproj
-dotnet test DealerDatabase.Data.IntegrationTests.cs/DealerDatabase.Data.IntegrationTests.csproj
-```
+Canonical dealer data is stored in `Dealer`. Source provenance is retained through:
 
-## Data model & provenance
-
-Canonical dealer data is held in `Dealer`. Provenance is retained through:
-
-- `DealerSourceRecord` (raw source rows + matching evidence)
-- `DealerFieldSource` (field/value-level source lineage)
-- `DealerTradingName` and `DealerDirector` (multi-valued source data)
-
-## Logging
-
-Structured logging is implemented across:
-
-- source loading
-- matching lifecycle
-- consolidation lifecycle
-- import transaction flow
-- web search/details actions
-
-Environment-specific log levels:
-
-- `src/DealerDatabase.Import/appsettings*.json`
-- `src/DealerDatabase.Web/appsettings*.json`
+- `DealerSourceRecord`
+- `DealerFieldSource`
+- `DealerTradingName`
+- `DealerDirector`
 
 ## Migrations
 
 Existing migrations are in `src/DealerDatabase.Data/Migrations`.
 
-To add a migration:
+To add a new migration:
 
-```bash
-dotnet tool restore
-dotnet ef migrations add <MigrationName> --project src/DealerDatabase.Data
-```
+## Design notes
+
+See `DECISIONS.md` for matching, conflict handling, assumptions, and follow-on improvements.
+
+If wanted, this can be tightened further into a more polished submission-ready version.
