@@ -1,12 +1,12 @@
-using System.Text.Json;
-using System.Xml.Linq;
-using DealerDatabase.Data;
-
 namespace DealerDatabase.Import.Importing;
 
+using DealerDatabase.Data;
 using DealerDatabase.Import.Abstractions;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Xml.Linq;
 
-public sealed class SourceDataLoader : ISourceDataLoader
+public sealed class SourceDataLoader(ILogger<SourceDataLoader> logger) : ISourceDataLoader
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -15,15 +15,44 @@ public sealed class SourceDataLoader : ISourceDataLoader
 
     public IReadOnlyList<SourceDealerRecord> LoadAll()
     {
+        logger.LogInformation("Loading source files from {DataDirectory}", SolutionPaths.DataDirectory);
+
         var records = new List<SourceDealerRecord>();
-        records.AddRange(LoadMarketCheck(Path.Combine(SolutionPaths.DataDirectory, "marketcheck_dealers.csv")));
-        records.AddRange(LoadCrawled(Path.Combine(SolutionPaths.DataDirectory, "crawled_dealers.csv")));
-        records.AddRange(LoadCompaniesHouse(Path.Combine(SolutionPaths.DataDirectory, "companies_house.json")));
-        records.AddRange(LoadFca(Path.Combine(SolutionPaths.DataDirectory, "fca_register.json")));
-        records.AddRange(LoadIco(Path.Combine(SolutionPaths.DataDirectory, "ico_register.csv")));
-        records.AddRange(LoadSaf(Path.Combine(SolutionPaths.DataDirectory, "saf_members.xml")));
-        records.AddRange(LoadVatDirectory(Path.Combine(SolutionPaths.DataDirectory, "vat_lookups")));
+
+        records.AddRange(LoadSource("MC", "marketcheck_dealers.csv", LoadMarketCheck));
+        records.AddRange(LoadSource("CRW", "crawled_dealers.csv", LoadCrawled));
+        records.AddRange(LoadSource("CH", "companies_house.json", LoadCompaniesHouse));
+        records.AddRange(LoadSource("FCA", "fca_register.json", LoadFca));
+        records.AddRange(LoadSource("ICO", "ico_register.csv", LoadIco));
+        records.AddRange(LoadSource("SAF", "saf_members.xml", LoadSaf));
+
+        var vatPath = Path.Combine(SolutionPaths.DataDirectory, "vat_lookups");
+        if (!Directory.Exists(vatPath))
+        {
+            logger.LogWarning("VAT lookup directory was not found at {Path}. Continuing without VAT source records.", vatPath);
+        }
+        records.AddRange(LoadSource("VAT", "vat_lookups", LoadVatDirectory));
+
+        logger.LogInformation("Finished source loading. Total records={RecordCount}", records.Count);
         return records;
+    }
+
+    private List<SourceDealerRecord> LoadSource(string sourceType, string relativePath, Func<string, IEnumerable<SourceDealerRecord>> loader)
+    {
+        var fullPath = Path.Combine(SolutionPaths.DataDirectory, relativePath);
+        logger.LogInformation("Loading source {SourceType} from {Path}", sourceType, fullPath);
+
+        try
+        {
+            var loaded = loader(fullPath).ToList();
+            logger.LogInformation("Loaded {RecordCount} records from source {SourceType}", loaded.Count, sourceType);
+            return loaded;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed loading source {SourceType} from {Path}", sourceType, fullPath);
+            throw;
+        }
     }
 
     private static IEnumerable<SourceDealerRecord> LoadMarketCheck(string path)
@@ -233,7 +262,7 @@ public sealed class SourceDataLoader : ISourceDataLoader
             var vatNumber = valid
                 ? target.GetStringOrNull("vatNumber") ?? queriedVatNumber
                 : queriedVatNumber;
-            var address = valid ? target.Value.GetPropertyOrDefault("address") : null;
+            var address = valid ? target?.GetPropertyOrDefault("address") : null;
 
             yield return new SourceDealerRecord
             {

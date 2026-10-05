@@ -1,9 +1,10 @@
 namespace DealerDatabase.Import.Matching;
 
-using DealerDatabase.Import.Importing;
 using DealerDatabase.Import.Abstractions;
+using DealerDatabase.Import.Importing;
+using Microsoft.Extensions.Logging;
 
-public sealed class DealerMatcher : IDealerMatcher
+public sealed class DealerMatcher(ILogger<DealerMatcher> logger) : IDealerMatcher
 {
     private static readonly HashSet<string> DirectoryDomains = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -12,6 +13,8 @@ public sealed class DealerMatcher : IDealerMatcher
 
     public MatchOutput Match(IReadOnlyList<SourceDealerRecord> records)
     {
+        logger.LogInformation("Matching started for {RecordCount} source records", records.Count);
+
         var unionFind = new UnionFind(records.Count);
         var evidenceByRecord = new Dictionary<int, List<MatchEvidence>>();
 
@@ -53,38 +56,51 @@ public sealed class DealerMatcher : IDealerMatcher
             .ThenBy(c => c.Records.Min(x => x.Record.SourceKey), StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        var multiRecordClusters = clusters.Count(c => c.Records.Count > 1);
+        var largestClusterSize = clusters.Count == 0 ? 0 : clusters.Max(c => c.Records.Count);
+        logger.LogInformation(
+            "Matching complete. Clusters={ClusterCount}, MultiRecordClusters={MultiRecordClusters}, LargestClusterSize={LargestClusterSize}",
+            clusters.Count,
+            multiRecordClusters,
+            largestClusterSize);
+
         return new MatchOutput(clusters);
     }
 
     private static void UnionOnKey(
-        IReadOnlyList<SourceDealerRecord> records,
-        UnionFind unionFind,
-        Dictionary<int, List<MatchEvidence>> evidenceByRecord,
-        Func<SourceDealerRecord, string> keySelector,
-        string evidenceType,
-        double confidence)
+    IReadOnlyList<SourceDealerRecord> records,
+    UnionFind unionFind,
+    Dictionary<int, List<MatchEvidence>> evidenceByRecord,
+    Func<SourceDealerRecord, string> keySelector,
+    string evidenceType,
+    double confidence)
     {
         var seen = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         for (var i = 0; i < records.Count; i++)
         {
             var key = keySelector(records[i]);
             if (string.IsNullOrWhiteSpace(key)) continue;
+
             if (!seen.TryGetValue(key, out var first))
             {
                 seen[key] = i;
                 continue;
             }
 
-            if (records[first].SourceType.Equals(records[i].SourceType, StringComparison.OrdinalIgnoreCase) &&
-                evidenceType is "company-number" or "VAT-number")
+            var isSameSource = records[first].SourceType.Equals(records[i].SourceType, StringComparison.OrdinalIgnoreCase);
+            var isAuthoritativeKey = evidenceType is "company-number" or "VAT-number";
+
+            // Skip same-source merges when relying on non-authoritative keys (prevents collapsing branches in Marketcheck/Crawled data)
+            if (isSameSource && !isAuthoritativeKey)
             {
-                // Same-source duplicates with the same authoritative identifier are safe to merge.
+                continue;
             }
 
             var evidence = new MatchEvidence(
                 records[first].SourceType, records[first].SourceKey,
                 records[i].SourceType, records[i].SourceKey,
                 confidence, [evidenceType]);
+
             unionFind.Union(first, i);
             evidenceByRecord[first].Add(evidence);
             evidenceByRecord[i].Add(evidence with { LeftKey = evidence.RightKey, RightKey = evidence.LeftKey });

@@ -1,7 +1,7 @@
+namespace DealerDatabase.Data;
+
 using DealerDatabase.Data.Entities;
 using Microsoft.EntityFrameworkCore;
-
-namespace DealerDatabase.Data;
 
 public class DealerDbContext(DbContextOptions<DealerDbContext> options) : DbContext(options)
 {

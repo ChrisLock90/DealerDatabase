@@ -1,16 +1,19 @@
+namespace DealerDatabase.Web.Controllers;
+
 using System.Diagnostics;
 using DealerDatabase.Data;
 using DealerDatabase.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace DealerDatabase.Web.Controllers;
-
-public class HomeController(DealerDbContext db) : Controller
+public class HomeController(DealerDbContext db, ILogger<HomeController> logger) : Controller
 {
     public async Task<IActionResult> Index(string? q, CancellationToken cancellationToken)
     {
         q = string.IsNullOrWhiteSpace(q) ? null : q.Trim();
+        logger.LogInformation("Dealer search requested. QueryProvided={QueryProvided}, QueryLength={QueryLength}", q is not null, q?.Length ?? 0);
+
         var query = db.Dealers.AsNoTracking().AsQueryable();
 
         if (q is not null)
@@ -33,11 +36,14 @@ public class HomeController(DealerDbContext db) : Controller
                 d.SourceRecords.Count))
             .ToListAsync(cancellationToken);
 
+        logger.LogInformation("Dealer search completed. Results={ResultCount}", dealers.Count);
         return View(new DealerListViewModel(dealers, q));
     }
 
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Dealer details requested for DealerId={DealerId}", id);
+
         var dealer = await db.Dealers
             .AsNoTracking()
             .Include(d => d.SourceRecords)
@@ -47,16 +53,26 @@ public class HomeController(DealerDbContext db) : Controller
             .ThenInclude(f => f.SourceRecord)
             .SingleOrDefaultAsync(d => d.Id == id, cancellationToken);
 
-        if (dealer is null) return NotFound();
+        if (dealer is null)
+        {
+            logger.LogWarning("Dealer details not found for DealerId={DealerId}", id);
+            return NotFound();
+        }
 
         var provenance = dealer.FieldSources
             .GroupBy(x => x.FieldName, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 g => g.Key,
-                g => (IReadOnlyList<string>)g
-                    .Select(x => $"{x.Value} ({x.SourceRecord.SourceType}:{x.SourceRecord.SourceKey})")
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                g => (IReadOnlyList<FieldProvenanceValue>)g
+                    .GroupBy(x => x.Value?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                    .Select(valueGroup => new FieldProvenanceValue(
+                        valueGroup.Key,
+                        valueGroup
+                            .Select(x => $"{x.SourceRecord.SourceType}:{x.SourceRecord.SourceKey}")
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                            .ToList()))
+                    .OrderBy(x => x.Value, StringComparer.OrdinalIgnoreCase)
                     .ToList(),
                 StringComparer.OrdinalIgnoreCase);
 
@@ -66,12 +82,20 @@ public class HomeController(DealerDbContext db) : Controller
             .Select(x => $"{x.SourceType}:{x.SourceKey}")
             .ToList();
 
+        logger.LogInformation(
+            "Dealer details loaded for DealerId={DealerId}. Sources={SourceCount}, FieldProvenanceGroups={FieldGroupCount}, Directors={DirectorCount}",
+            id,
+            dealer.SourceRecords.Count,
+            provenance.Count,
+            dealer.Directors.Count);
+
         return View(new DealerDetailsViewModel(dealer, provenance, labels));
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
+        logger.LogError("Error action invoked. TraceIdentifier={TraceIdentifier}", HttpContext.TraceIdentifier);
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

@@ -1,6 +1,6 @@
-using System.Text;
-
 namespace DealerDatabase.Import.Importing;
+
+using System.Text;
 
 /// <summary>
 /// Small RFC-4180 compatible reader for the supplied CSV exports.
