@@ -53,9 +53,14 @@ Canonical dealer data is stored in `Dealer`. Source provenance is retained throu
 
 ## Migrations
 
-Existing migrations are in `src/DealerDatabase.Data/Migrations`.
+To add a new migration (from the solution root):
 
-To add a new migration:
+dotnet tool restore
+dotnet ef migrations add <MigrationName> --project src/DealerDatabase.Data --startup-project src/DealerDatabase.Import
+
+To apply migrations manually:
+
+dotnet ef database update --project src/DealerDatabase.Data --startup-project src/DealerDatabase.Import
 
 ## Design notes
 
@@ -73,3 +78,4 @@ See `DECISIONS.md` for matching, conflict handling, assumptions, and follow-on i
 - Add unit tests for the web interface
 - More robust tests and logging
 - Add Snyk for security scanning
+- Add a live updating search and overall more UI features/look and feel

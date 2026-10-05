@@ -1,10 +1,10 @@
 namespace DealerDatabase.Import.Importing;
 
-using System.Text.Json;
 using DealerDatabase.Data.Entities;
-using DealerDatabase.Import.Matching;
 using DealerDatabase.Import.Abstractions;
+using DealerDatabase.Import.Matching;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 public sealed class ConsolidationService(ILogger<ConsolidationService> logger) : IConsolidationService
 {

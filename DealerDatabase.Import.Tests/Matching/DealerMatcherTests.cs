@@ -1,5 +1,6 @@
 namespace DealerDatabase.Import.Tests.Matching;
 
+using DealerDatabase.Import.Importing;
 using DealerDatabase.Import.Matching;
 using DealerDatabase.Import.Tests.TestData;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -138,5 +139,209 @@ public class DealerMatcherTests
         var output = _sut.Match([left, right]);
 
         Assert.That(output.Clusters, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Merges_When_Frn_Is_Corroborated_By_Postcode_And_Name()
+    {
+        var left = new SourceDealerRecordBuilder()
+            .WithSource("FCA", "fca-1")
+            .WithFca("7654321")
+            .WithTradingName("Summit Vehicles")
+            .WithPostcode("LS1 2AB")
+            .Build();
+
+        var right = new SourceDealerRecordBuilder()
+            .WithSource("CRW", "crw-1")
+            .WithFca("7654321")
+            .WithTradingName("Summit Vehicles Ltd")
+            .WithPostcode("LS1 2AB")
+            .Build();
+
+        var output = _sut.Match([left, right]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(1));
+        Assert.That(output.Clusters[0].Records, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Does_Not_Merge_When_Only_Frn_Matches_Without_Corroboration()
+    {
+        var left = new SourceDealerRecordBuilder()
+            .WithSource("FCA", "fca-1")
+            .WithFca("1111111")
+            .WithTradingName("Alpha Cars")
+            .WithPostcode("AA1 1AA")
+            .Build();
+
+        var right = new SourceDealerRecordBuilder()
+            .WithSource("CRW", "crw-1")
+            .WithFca("1111111")
+            .WithTradingName("Zenith Logistics")
+            .WithPostcode("ZZ9 9ZZ")
+            .Build();
+
+        var output = _sut.Match([left, right]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Does_Not_Merge_When_Vat_Is_Not_Validated_And_No_Other_Evidence()
+    {
+        var left = new SourceDealerRecordBuilder()
+            .WithSource("VAT", "vat-1")
+            .WithVat("GB123456789", "Not found")
+            .Build();
+
+        var right = new SourceDealerRecordBuilder()
+            .WithSource("CH", "ch-1")
+            .WithVat("GB123456789")
+            .Build();
+
+        var output = _sut.Match([left, right]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Does_Not_Merge_When_Only_Phone_Is_Shared()
+    {
+        var left = new SourceDealerRecordBuilder()
+            .WithSource("CRW", "crw-1")
+            .WithTradingName("Atlas Autos")
+            .WithPhone("01234 567890")
+            .Build();
+
+        var right = new SourceDealerRecordBuilder()
+            .WithSource("MC", "mc-1")
+            .WithTradingName("Beacon Vehicles")
+            .WithPhone("01234 567890")
+            .Build();
+
+        var output = _sut.Match([left, right]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Does_Not_Merge_When_Only_Email_Is_Shared()
+    {
+        var left = new SourceDealerRecordBuilder()
+            .WithSource("CRW", "crw-1")
+            .WithTradingName("Atlas Autos")
+            .WithEmail("sales@atlas.example")
+            .Build();
+
+        var right = new SourceDealerRecordBuilder()
+            .WithSource("MC", "mc-1")
+            .WithTradingName("Beacon Vehicles")
+            .WithEmail("sales@atlas.example")
+            .Build();
+
+        var output = _sut.Match([left, right]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Does_Not_Merge_On_Address_Similarity_Alone()
+    {
+        var left = new SourceDealerRecord
+        {
+            SourceType = "CRW",
+            SourceKey = "crw-1",
+            TradingNames = ["Alpha Retail"],
+            TradingAddressLine1 = "The Old Foundry",
+            TradingCity = "Leeds"
+        };
+
+        var right = new SourceDealerRecord
+        {
+            SourceType = "MC",
+            SourceKey = "mc-1",
+            TradingNames = ["Zenith Plant"],
+            TradingAddressLine1 = "The Old Foundry",
+            TradingCity = "Leeds"
+        };
+
+        var output = _sut.Match([left, right]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Does_Not_Merge_On_Director_Overlap_Alone()
+    {
+        var left = new SourceDealerRecord
+        {
+            SourceType = "CH",
+            SourceKey = "ch-1",
+            TradingNames = ["Atlas Retail"],
+            Directors = [new DirectorRecord { Name = "Chris Walker", Role = "Director" }]
+        };
+
+        var right = new SourceDealerRecord
+        {
+            SourceType = "CRW",
+            SourceKey = "crw-1",
+            TradingNames = ["Beacon Plant"],
+            Directors = [new DirectorRecord { Name = "Chris Walker", Role = "Director" }]
+        };
+
+        var output = _sut.Match([left, right]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Does_Not_Merge_Same_Source_Fca_Records()
+    {
+        var left = new SourceDealerRecordBuilder()
+            .WithSource("FCA", "fca-1")
+            .WithFca("2222222")
+            .WithTradingName("Kappa Cars")
+            .Build();
+
+        var right = new SourceDealerRecordBuilder()
+            .WithSource("FCA", "fca-2")
+            .WithFca("2222222")
+            .WithTradingName("Kappa Cars")
+            .Build();
+
+        var output = _sut.Match([left, right]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void Match_Builds_Transitive_Cluster_From_Corroborated_Pairs()
+    {
+        var a = new SourceDealerRecordBuilder()
+            .WithSource("CRW", "crw-a")
+            .WithTradingName("Northway Motors")
+            .WithPostcode("B1 1AA")
+            .WithWebsite("https://northwaymotors.example")
+            .Build();
+
+        var b = new SourceDealerRecordBuilder()
+            .WithSource("MC", "mc-b")
+            .WithTradingName("Northway Motors Ltd")
+            .WithPostcode("B1 1AA")
+            .WithWebsite("https://northwaymotors.example")
+            .WithPhone("020 1111 2222")
+            .Build();
+
+        var c = new SourceDealerRecordBuilder()
+            .WithSource("ICO", "ico-c")
+            .WithTradingName("Northway Motor Company")
+            .WithPostcode("B1 1AA")
+            .WithPhone("020 1111 2222")
+            .Build();
+
+        var output = _sut.Match([a, b, c]);
+
+        Assert.That(output.Clusters, Has.Count.EqualTo(1));
+        Assert.That(output.Clusters[0].Records, Has.Count.EqualTo(3));
     }
 }

@@ -1,8 +1,8 @@
 namespace DealerDatabase.Import.Abstractions;
 
-using System.Collections.Generic;
 using DealerDatabase.Data.Entities;
 using DealerDatabase.Import.Matching;
+using System.Collections.Generic;
 
 public interface IConsolidationService
 {

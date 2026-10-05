@@ -2,7 +2,7 @@ namespace DealerDatabase.Import.Importing;
 
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
+
 public static partial class Normalizers
 {
     private static readonly string[] LegalSuffixes =

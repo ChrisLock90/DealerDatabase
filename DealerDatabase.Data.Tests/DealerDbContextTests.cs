@@ -221,4 +221,122 @@ public class DealerDbContextTests
         }
     }
 
+    [Test]
+    public async Task TradingName_UniqueConstraint_OnDealerIdSourceRecordIdName_ThrowsExceptionOnDuplicate()
+    {
+        using var context = CreateContext();
+        var dealer = new Dealer { Name = "Trading Names Ltd" };
+        var source = new DealerSourceRecord
+        {
+            Dealer = dealer,
+            SourceType = "MC",
+            SourceKey = "MC-001",
+            ImportedAtUtc = DateTime.UtcNow
+        };
+
+        context.Dealers.Add(dealer);
+        context.DealerSourceRecords.Add(source);
+        await context.SaveChangesAsync();
+
+        context.DealerTradingNames.Add(new DealerTradingName
+        {
+            DealerId = dealer.Id,
+            SourceRecordId = source.Id,
+            Name = "Trading Name One"
+        });
+        await context.SaveChangesAsync();
+
+        context.DealerTradingNames.Add(new DealerTradingName
+        {
+            DealerId = dealer.Id,
+            SourceRecordId = source.Id,
+            Name = "Trading Name One"
+        });
+
+        Assert.ThrowsAsync<DbUpdateException>(async () => await context.SaveChangesAsync());
+    }
+
+    [Test]
+    public async Task FieldSource_UniqueConstraint_OnDealerIdFieldNameSourceRecordId_ThrowsExceptionOnDuplicate()
+    {
+        using var context = CreateContext();
+        var dealer = new Dealer { Name = "Field Source Ltd" };
+        var source = new DealerSourceRecord
+        {
+            Dealer = dealer,
+            SourceType = "ICO",
+            SourceKey = "ICO-001",
+            ImportedAtUtc = DateTime.UtcNow
+        };
+
+        context.Dealers.Add(dealer);
+        context.DealerSourceRecords.Add(source);
+        await context.SaveChangesAsync();
+
+        context.DealerFieldSources.Add(new DealerFieldSource
+        {
+            DealerId = dealer.Id,
+            SourceRecordId = source.Id,
+            FieldName = "PrimaryPhone",
+            Value = "01234 567890"
+        });
+        await context.SaveChangesAsync();
+
+        context.DealerFieldSources.Add(new DealerFieldSource
+        {
+            DealerId = dealer.Id,
+            SourceRecordId = source.Id,
+            FieldName = "PrimaryPhone",
+            Value = "01234 999999"
+        });
+
+        Assert.ThrowsAsync<DbUpdateException>(async () => await context.SaveChangesAsync());
+    }
+
+    [Test]
+    public async Task Dealer_Name_IsRequired_ThrowsExceptionWhenNull()
+    {
+        using var context = CreateContext();
+        context.Dealers.Add(new Dealer { Name = null! });
+
+        Assert.ThrowsAsync<DbUpdateException>(async () => await context.SaveChangesAsync());
+    }
+
+    [Test]
+    public async Task DealerSourceRecord_SourceType_IsRequired_ThrowsExceptionWhenNull()
+    {
+        using var context = CreateContext();
+        var dealer = new Dealer { Name = "Required SourceType Ltd" };
+        context.Dealers.Add(dealer);
+        await context.SaveChangesAsync();
+
+        context.DealerSourceRecords.Add(new DealerSourceRecord
+        {
+            DealerId = dealer.Id,
+            SourceType = null!,
+            SourceKey = "REQ-001",
+            ImportedAtUtc = DateTime.UtcNow
+        });
+
+        Assert.ThrowsAsync<DbUpdateException>(async () => await context.SaveChangesAsync());
+    }
+
+    [Test]
+    public async Task DealerDirector_SourceRecordId_ForeignKey_ThrowsExceptionWhenMissing()
+    {
+        using var context = CreateContext();
+        var dealer = new Dealer { Name = "Foreign Key Ltd" };
+        context.Dealers.Add(dealer);
+        await context.SaveChangesAsync();
+
+        context.DealerDirectors.Add(new DealerDirector
+        {
+            DealerId = dealer.Id,
+            SourceRecordId = 999999,
+            Name = "FK Test",
+            Role = "Director"
+        });
+
+        Assert.ThrowsAsync<DbUpdateException>(async () => await context.SaveChangesAsync());
+    }
 }

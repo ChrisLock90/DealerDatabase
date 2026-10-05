@@ -1,11 +1,11 @@
 namespace DealerDatabase.Web.Controllers;
 
-using System.Diagnostics;
 using DealerDatabase.Data;
 using DealerDatabase.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 public class HomeController(DealerDbContext db, ILogger<HomeController> logger) : Controller
 {

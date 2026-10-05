@@ -1,7 +1,7 @@
 namespace DealerDatabase.Import.Abstractions;
 
-using System.Collections.Generic;
 using DealerDatabase.Import.Importing;
+using System.Collections.Generic;
 public interface ISourceDataLoader
 {
     IReadOnlyList<SourceDealerRecord> LoadAll();
