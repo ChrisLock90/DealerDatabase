@@ -15,8 +15,4 @@ public class DealerDirector
     public string? Nationality { get; set; }
     public DateTime? AppointedOn { get; set; }
     public DateTime? ResignedOn { get; set; }
-
-    // Merge metadata attached during import when duplicate director entries are consolidated.
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public string? MergeNote { get; set; }
 }

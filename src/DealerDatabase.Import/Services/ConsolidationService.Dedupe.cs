@@ -1,6 +1,6 @@
-using DealerDatabase.Data.Entities;
-
 namespace DealerDatabase.Import.Importing;
+
+using DealerDatabase.Data.Entities;
 
 public static class ConsolidationServiceExtensions
 {
@@ -43,12 +43,6 @@ public static class ConsolidationServiceExtensions
                 first.Role = (items[0].Role ?? string.Empty).Trim();
 
                 merged.Add(first);
-
-                // Logging hook: if duplicates were merged, notify (the import app will log)
-                if (items.Count > 1)
-                {
-                    first.MergeNote = (first.MergeNote ?? string.Empty) + $"Merged {items.Count} director entries;";
-                }
             }
 
             dealer.Directors = merged;

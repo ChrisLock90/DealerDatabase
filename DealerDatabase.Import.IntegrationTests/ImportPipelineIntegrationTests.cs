@@ -58,6 +58,5 @@ public class ImportPipelineIntegrationTests
         Assert.That(mergedDirector.Name, Is.EqualTo("Jane Doe"));
         Assert.That(mergedDirector.Role, Is.EqualTo("Director"));
         Assert.That(mergedDirector.Occupation, Is.EqualTo("Manager"));
-        Assert.That(mergedDirector.MergeNote, Does.Contain("Merged 2 director entries"));
     }
 }

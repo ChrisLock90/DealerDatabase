@@ -180,9 +180,6 @@ namespace DealerDatabase.Data.Migrations
                     b.Property<string>("Role")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("MergeNote")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("SourceRecordId")
                         .HasColumnType("INTEGER");
 

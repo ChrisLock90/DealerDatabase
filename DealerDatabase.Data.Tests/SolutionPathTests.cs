@@ -1,8 +1,8 @@
-﻿using System.IO;
+﻿namespace DealerDatabase.Tests.Data;
+
+using System.IO;
 using DealerDatabase.Data;
 using NUnit.Framework;
-
-namespace DealerDatabase.Tests.Data;
 
 [TestFixture]
 public class SolutionPathsTests

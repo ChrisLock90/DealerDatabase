@@ -181,9 +181,6 @@ public sealed class ConsolidationService(ILogger<ConsolidationService> logger) :
     private static decimal? BestDecimal(IEnumerable<SourceDealerRecord> records, string field, Func<SourceDealerRecord, decimal?> selector)
         => records.OrderByDescending(r => SourcePriority(r, field)).Select(selector).FirstOrDefault(x => x.HasValue);
 
-    private static bool? BestBool(IEnumerable<SourceDealerRecord> records, string field, Func<SourceDealerRecord, bool?> selector)
-        => records.OrderByDescending(r => SourcePriority(r, field)).Select(selector).FirstOrDefault(x => x.HasValue);
-
     private static string? BestVatValidationStatus(IEnumerable<SourceDealerRecord> records)
     {
         if (records.Any(r => r.SourceType == "VAT" && string.Equals(r.VatValidationStatus, "Valid", StringComparison.OrdinalIgnoreCase)))

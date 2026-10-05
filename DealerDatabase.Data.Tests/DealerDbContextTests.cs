@@ -221,18 +221,4 @@ public class DealerDbContextTests
         }
     }
 
-    [Test]
-    public void Director_NotMappedMergeNote_IsNotPersistedToDatabase()
-    {
-        // Arrange
-        var director = new DealerDirector
-        {
-            Name = "Robert Bruce",
-            Role = "Director",
-            MergeNote = "Consolidated from source 1 & 2"
-        };
-
-        // Assert
-        Assert.That(director.MergeNote, Is.EqualTo("Consolidated from source 1 & 2"));
-    }
 }

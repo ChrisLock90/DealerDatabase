@@ -41,15 +41,6 @@ try
     // Run deduplication and simple conflict resolution for directors before persisting
     dealers = consolidator.DeduplicateDirectors(dealers.ToList()).ToList();
 
-    // Log duplicates merged
-    foreach (var d in dealers)
-    {
-        foreach (var dir in d.Directors.Where(x => !string.IsNullOrWhiteSpace(x.MergeNote)))
-        {
-            logger.LogInformation("Merged director entries for DealerId={DealerId}, Name={Name}, Role={Role}: {Note}", d.Id, dir.Name, dir.Role, dir.MergeNote);
-        }
-    }
-
     await using var scope = host.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<DealerDbContext>();
 

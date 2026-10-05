@@ -61,4 +61,15 @@ To add a new migration:
 
 See `DECISIONS.md` for matching, conflict handling, assumptions, and follow-on improvements.
 
-If wanted, this can be tightened further into a more polished submission-ready version.
+## What I'd do with more time
+
+- Historical data retention and versioning
+- Manual Review process for  low-confidence and/or ambiguous matches
+- Use stored ImportedAtUTC and additionally use the CrawledAtUTC timestamp from source data 
+  to determine the most recent source record for each field for future imports when data is re-crawled or refreshed
+- Add a web API for programmatic access to the dealer database with Swagger/OpenAPI documentation
+- CSV library for more robust import/export
+- Upgrade to .NET 10 and EF Core 8
+- Add unit tests for the web interface
+- More robust tests and logging
+- Add Snyk for security scanning
