@@ -65,18 +65,3 @@ dotnet ef database update --project src/DealerDatabase.Data --startup-project sr
 ## Design notes
 
 See `DECISIONS.md` for matching, conflict handling, assumptions, and follow-on improvements.
-
-## What I'd do with more time
-
-- Historical data retention and versioning
-- Manual Review process for  low-confidence and/or ambiguous matches
-- Use stored ImportedAtUTC and additionally use the CrawledAtUTC timestamp from source data 
-  to determine the most recent source record for each field for future imports when data is re-crawled or refreshed
-- Add a web API for programmatic access to the dealer database with Swagger/OpenAPI documentation
-- CSV library for more robust import/export
-- Add base test classes for common code
-- Upgrade to .NET 10 and EF Core 8
-- Add unit tests for the web interface
-- More robust tests and logging
-- Add Snyk for security scanning
-- Add a live updating search and overall more UI features/look and feel

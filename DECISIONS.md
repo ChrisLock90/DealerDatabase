@@ -18,4 +18,17 @@ Scope: The import produces a current consolidated view rather than maintaining a
 
 Not implemented: Automatic franchise/group hierarchy detection, machine-learning-based matching and a manual match-review workflow were left out to keep the solution focused and explainable.
 
-Next steps: Add further validation and improve handling of ambiguous matches, particularly where several sources contain conflicting or incomplete information.
+What I'd do with more time:
+
+- Historical data retention and versioning
+- Manual Review process for  low-confidence and/or ambiguous matches
+- Use stored ImportedAtUTC and additionally use the CrawledAtUTC timestamp from source data 
+  to determine the most recent source record for each field for future imports when data is re-crawled or refreshed
+- Add a web API for programmatic access to the dealer database with Swagger/OpenAPI documentation
+- CSV library for more robust import/export
+- Add base test classes for common code
+- Upgrade to .NET 10 and EF Core 8
+- Add unit tests for the web interface
+- More robust tests and logging
+- Add Snyk for security scanning
+- Add a live updating search and overall more UI features/look and feel
